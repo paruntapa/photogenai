@@ -7,7 +7,7 @@ export interface TImage {
     imageUrl: string
 }
 
-const ImageCard = (props: TImage) => {
+export const ImageCard = (props: TImage) => {
   return (
     <div className='bg-zinc-900 border rounded hover:border-primary w-fit '>
         <div className='flex p-2 gap-3 rounded '>
@@ -26,5 +26,3 @@ export const ImageCardSkeleton = () => {
         </div>
     )
 }
-
-export default ImageCard 
