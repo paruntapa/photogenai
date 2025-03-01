@@ -5,6 +5,7 @@ import { S3Client } from "bun";
 import { FalAIModel } from "./models/FalAIModel";
 import cors from "cors";
 import { authMiddleware } from "./middleware";
+import { fal } from "@fal-ai/client";
 
 const app = express();
 const falAiModel = new FalAIModel();
@@ -164,12 +165,20 @@ app.get('/image/bulk',authMiddleware,  async (req, res) => {
     const limit = req.query.limit as string ?? "10";
     const offset = req.query.offset as string ?? "0";
 
+    
+
     const imagesData = await prisma.outputImages.findMany({
         where: {
             id: {
                 in: ids
             },
-            userId: req.userId!
+            userId: req.userId!,
+            status: {
+                not: "Failed"
+            }
+        },
+        orderBy: {
+            createdAt: 'desc'
         },
         skip: parseInt(offset),
         take: parseInt(limit)
@@ -192,13 +201,15 @@ app.get("/models", authMiddleware, async (req, res) => {
     })
 })
 
-app.post("fal-ai/webhook/train", async (req, res) => {       
-    console.log("fal-ai/webhook/train")
-    console.log(JSON.stringify(req.body))
+app.post("fal-ai/webhook/train", async (req, res) => {      
 
     const requestId = req.body.request_id as string;
 
-    const {imageUrl} = await falAiModel.generateImageSync(req.body.tensor_path)
+    const result = await fal.queue.result("fal-ai/flux-lora", {
+        requestId
+    })
+
+    const {imageUrl} = await falAiModel.generateImageSync(result.data.diffusers_lora_file.url)
 
     await prisma.model.updateMany({
         where: {
@@ -206,7 +217,7 @@ app.post("fal-ai/webhook/train", async (req, res) => {
         },
         data: {
             trainingStatus: "Generated",
-            tensorPath: req.body.tensor_path,
+            tensorPath: result.data.diffusers_lora_file.url,
             thumbnail: imageUrl
         }
     })
@@ -222,6 +233,20 @@ app.post("fal-ai/webhook/image", async (req, res) => {
 
     const requestId = req.body.request_id;
 
+    if(req.body.status === "ERROR") {
+        res.status(411).json({})
+        await prisma.outputImages.updateMany({
+        where: {
+            falAiRequestId: requestId
+        },
+        data: {
+            status: "Failed",
+            imageUrl: req.body.payload.images[0].url
+        }
+    })
+        return;
+    }
+
     await prisma.outputImages.updateMany({
         where: {
             falAiRequestId: requestId
@@ -231,6 +256,7 @@ app.post("fal-ai/webhook/image", async (req, res) => {
             imageUrl: req.body.payload.images[0].url
         }
     })
+
     res.json({
         message: "Webhook received"
     })
