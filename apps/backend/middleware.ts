@@ -6,9 +6,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     const token = authHeader?.split(" ")[1]
 
     try {
-        console.log(token);
-        console.log(authHeader);
-        console.log(req.headers)
         const decoded = jwt.decode(token, process.env.AUTH_JWT_KEY, { algorithms: ['RS256'] } )
         if(decoded?.sub) {
             next()

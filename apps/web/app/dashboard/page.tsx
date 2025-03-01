@@ -15,16 +15,16 @@ const page = () => {
             <TabsList>
                 <TabsTrigger value="camera">Camera</TabsTrigger>  
                 <TabsTrigger value="generate">Generate Image</TabsTrigger>
-                <TabsTrigger value="train">Train a Model</TabsTrigger>
                 <TabsTrigger value="packs">Packs</TabsTrigger>
+                <TabsTrigger value="train">Train a Model</TabsTrigger>
 
             </TabsList>
         </div>
-        <TabsContent value="generate"><GenerateImage/></TabsContent>
-        <TabsContent value="packs"><Packs/></TabsContent>
-        <TabsContent value="train"><Train/></TabsContent>
-        <TabsContent value="camera"><Camera/></TabsContent>
-        </Tabs>
+            <TabsContent value="generate"><GenerateImage/></TabsContent>
+            <TabsContent value="packs"><Packs/></TabsContent>
+            <TabsContent value="train"><Train/></TabsContent>
+            <TabsContent value="camera"><Camera/></TabsContent>
+    </Tabs>
         </div>
         </div>
     </div>

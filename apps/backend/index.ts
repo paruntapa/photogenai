@@ -52,7 +52,7 @@ app.post('/ai/training',authMiddleware,  async (req, res) => {
             bald: parsedBody.data.bald,
             userId: req.userId!,
             zipUrl: parsedBody.data.zipUrl,
-            falAiRequestId: request_id
+            falAiRequestId: request_id,
         }
     })
 
@@ -161,7 +161,6 @@ app.get('/image/bulk',authMiddleware,  async (req, res) => {
         skip: parseInt(offset),
         take: parseInt(limit)
     });
-    console.log(imagesData)
     
     res.json({
         images: imagesData
@@ -169,10 +168,22 @@ app.get('/image/bulk',authMiddleware,  async (req, res) => {
     })
 })
 
-app.post("fal-ai/webhook/train", async (req, res) => {    
-    console.log(req.body)
+app.get("/models", authMiddleware, async (req, res) => {
+    const models = await prisma.model.findMany({
+        where: {
+            OR: [{ userId: req.userId }, { open: true }]
+        }
+    })
+    res.json({
+        models
+    })
+})
 
-    const requestId = req.body.request_id;
+app.post("fal-ai/webhook/train", async (req, res) => {    
+
+    const requestId = req.body.request_id as string;
+
+    const {imageUrl} = await falAiModel.generateImageSync(req.body.tensor_path)
 
     await prisma.model.updateMany({
         where: {
@@ -180,7 +191,8 @@ app.post("fal-ai/webhook/train", async (req, res) => {
         },
         data: {
             trainingStatus: "Generated",
-            tensorPath: req.body.tensor_path
+            tensorPath: req.body.tensor_path,
+            thumbnail: imageUrl
         }
     })
 
@@ -190,7 +202,6 @@ app.post("fal-ai/webhook/train", async (req, res) => {
 })
 
 app.post("fal-ai/webhook/image", async (req, res) => {    
-    console.log(req.body)
     const requestId = req.body.request_id;
 
     await prisma.outputImages.updateMany({

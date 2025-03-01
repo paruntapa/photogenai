@@ -26,6 +26,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "common": "*",
+    "corepack": "^0.32.0",
     "cors": "^2.8.5",
     "embla-carousel-react": "^8.5.2",
     "jszip": "^3.10.1",

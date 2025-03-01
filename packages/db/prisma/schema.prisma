@@ -37,11 +37,13 @@ model Model {
   type           ModelTypeEnum
   age            Int
   ethinicity     EthinicityEnum
+  thumbnail      String?
   eyeColor       EyeColorEnum  
   bald           Boolean
   trainingStatus ModelTrainingStatusEnum @default(Pending)
   falAiRequestId String?
   zipUrl         String
+  open           Boolean @default(false)
   outputImages   OutputImages[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
