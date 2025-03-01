@@ -118,8 +118,21 @@ app.post('/pack/generate', authMiddleware, async (req, res) => {
         }
     })
 
+    const model = await prisma.model.findFirst({
+        where: {
+            id: parsedBody.data.modelId
+        }
+    })
+
+    if(!model || !model.tensorPath) {
+        res.status(411).json({
+            message: "Model Not Found",
+        })
+        return;
+    }
+
     let requestIds: {request_id: string}[] = await Promise.all(prompts.map( (prompts)=> 
-        falAiModel.generateImage(prompts.prompt, parsedBody.data.modelId)))
+        falAiModel.generateImage(prompts.prompt, model.tensorPath!)))
 
     const images = await prisma.outputImages.createManyAndReturn({
         data: prompts.map((prompt, index) => ({
@@ -179,7 +192,9 @@ app.get("/models", authMiddleware, async (req, res) => {
     })
 })
 
-app.post("fal-ai/webhook/train", async (req, res) => {    
+app.post("fal-ai/webhook/train", async (req, res) => {       
+    console.log("fal-ai/webhook/train")
+    console.log(JSON.stringify(req.body))
 
     const requestId = req.body.request_id as string;
 
@@ -202,6 +217,9 @@ app.post("fal-ai/webhook/train", async (req, res) => {
 })
 
 app.post("fal-ai/webhook/image", async (req, res) => {    
+    console.log("fal-ai/webhook/image")
+    console.log(req.body)
+
     const requestId = req.body.request_id;
 
     await prisma.outputImages.updateMany({
@@ -210,7 +228,7 @@ app.post("fal-ai/webhook/image", async (req, res) => {
         },
         data: {
             status: "Generated",
-            imageUrl: req.body.image_url
+            imageUrl: req.body.payload.images[0].url
         }
     })
     res.json({
